@@ -24,6 +24,13 @@ class Config(object):
         self.local_conf = {}
         execfile(self.config_path, self.local_conf)
 
+    def __getattr__(self, name):
+        if name in self.local_conf:
+            return self.local_conf[name]
+
+        raise AttributeError("{!r} object has no attribute {!r}"
+                             .format(self.__class__, name))
+
     def get_driver(self):
         """
         Creates a Selenium driver on the basis of the configuration file
