@@ -10,6 +10,11 @@ SAUCELABS_CREDENTIALS = "userid:key"
 # selenium.webdriver.common.desired_capabilities.
 BROWSER = "FIREFOX"
 
+# Set the desired capabilities of the browser.
+DESIRED_CAPABILITIES = {
+    "platform": "Linux"
+}
+
 #
 # CHROME settings
 #
@@ -18,6 +23,10 @@ CHROMEDRIVER_PATH = "/blah/blah/chromedriver"
 
 # Only useful when running Chrome locally
 SERVICE_LOG_PATH = "/tmp/log"
+
+from selenium.webdriver.chrome.options import Options
+CHROME_OPTIONS = Options()
+CHROME_OPTIONS.binary_location = "/blah"
 
 #
 # FIREFOX_SETTINGS

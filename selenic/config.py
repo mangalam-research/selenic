@@ -44,10 +44,13 @@ class Config(object):
         browser_string = self.local_conf["BROWSER"]
         desired_capabilities = dict(getattr(webdriver.DesiredCapabilities,
                                             browser_string))
-        if os.environ.get("SELENIUM_SAUCELABS"):
-            desired_capabilities['platform'] = 'Linux'
-            desired_capabilities['name'] = 'Wed test'
 
+        # Set the desired capabilities from DESIRED_CAPABILITIES
+        dc_fields = self.local_conf["DESIRED_CAPABILITIES"]
+        for field in dc_fields:
+            desired_capabilities[field] = dc_fields[field]
+
+        if os.environ.get("SELENIUM_SAUCELABS"):
             driver = webdriver.Remote(
                 desired_capabilities=desired_capabilities,
                 command_executor="http://" +
@@ -57,6 +60,7 @@ class Config(object):
             if browser_string == "CHROME":
                 driver = webdriver.Chrome(
                     self.local_conf["CHROMEDRIVER_PATH"],
+                    chrome_options=self.local_conf.get("CHROME_OPTIONS"),
                     desired_capabilities=desired_capabilities,
                     service_log_path=self.local_conf["SERVICE_LOG_PATH"])
             elif browser_string == "FIREFOX":
