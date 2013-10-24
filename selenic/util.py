@@ -74,8 +74,63 @@ class Util(object):
         """)
 
 
+    def scroll_top(self, element):
+        """
+        Gets the top of the scrolling area of the element.
+
+        :param element: An element on the page.
+        :type element: :class:`selenium.webdriver.remote.webelement.WebElement`
+        :returns: The top of the scrolling area.
+        """
+        return self.driver.execute_script("""
+        return arguments[0].scrollTop;
+        """, element)
+
+
+    def window_scroll_top(self):
+        """
+        Gets the top of the scrolling area for ``window``.
+
+        :returns: The top of the scrolling area.
+        """
+        return self.driver.execute_script("""
+        return window.scrollY;
+        """)
+
+
+
+    def window_scroll_left(self):
+        """
+        Gets the left of the scrolling area for ``window``.
+
+        :returns: The left of the scrolling area.
+        """
+        return self.driver.execute_script("""
+        return window.scrollX;
+        """)
+
+
+
     def wait(self, condition):
+        """
+        Waits for a condition to be true.
+
+        :param condition: Should be a callable that operates in the
+                          same way ``WebDriverWait.until`` expects.
+        :returns: Whatever ``WebDriverWait.until`` returns.
+        """
         return WebDriverWait(self.driver, self.timeout).until(condition)
+
+
+    def wait_until_not(self, condition):
+        """
+        Waits for a condition to be false.
+
+        :param condition: Should be a callable that operates in the
+                          same way ``WebDriverWait.until_not`` expects.
+        :returns: Whatever ``WebDriverWait.until_not`` returns.
+        """
+        return WebDriverWait(self.driver, self.timeout).until_not(condition)
 
 
 def locations_within(a, b, tolerance):
