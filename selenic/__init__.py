@@ -1,10 +1,20 @@
+from distutils.version import StrictVersion
+
 from selenium.webdriver.common.action_chains import ActionChains
 import selenium
 
-from config import *
+from .config import *
 
-if selenium.__version__ == "2.35.0":
-    # Work around bug in 2.35.0
+sel_ver = StrictVersion(selenium.__version__)
+v2_37_2 = StrictVersion("2.37.2")
+
+if sel_ver > v2_37_2:
+    raise Exception("please ascertain whether the ActionChains.send_keys "
+                    "patch is required for Selenium version: " +
+                    selenium.__version__)
+
+if sel_ver >= StrictVersion("2.35.0") and sel_ver <= v2_37_2:
+    # Work around bug
     def send_keys(self, *keys_to_send):
         """
         Sends keys to current focused element.
