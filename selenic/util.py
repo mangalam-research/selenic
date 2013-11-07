@@ -42,6 +42,29 @@ class Util(object):
             EC.element_to_be_clickable(locator))
 
 
+    def find_descendants_by_text_re(self, parent, re):
+        """
+        :param parent: The parent element into which to search.
+        :type parent: :class:`selenium.webdriver.remote.webelement.WebElement`
+        :param re: A regular expression in JavaScript syntax.
+        :type re: :class:`str`
+        :returns: The descendants whose text (as returned by
+                  ``jQuery().text()``) match the regular expression.
+
+        """
+
+        def cond(*_):
+            return self.driver.execute_script("""
+            var parent = arguments[0];
+            var re = new RegExp(arguments[1]);
+            return jQuery(parent).find("*").filter(function () {
+            return re.test(jQuery(this).text().trim());
+            }).toArray();
+            return ret;
+            """, parent, re)
+
+        return self.wait(cond)
+
     def get_text_excluding_children(self, element):
         return self.driver.execute_script("""
         return jQuery(arguments[0]).contents().filter(function() {
@@ -60,17 +83,67 @@ class Util(object):
         element)
 
 
+    def element_screen_center(self, element):
+        """
+        :returns: The center point of the element.
+        :rtype: class:`dict` with the field "left" set to the X
+                coordinate and the field "top" set to the Y
+                coordinate.
+
+        """
+        pos = self.element_screen_position(element)
+        size = element.size
+        pos["top"] += int(size["height"] / 2)
+        pos["left"] += int(size["width"] / 2)
+        return pos
+
+
+    def visible_to_user(self, element):
+        if not element.is_displayed():
+            return False
+        pos = self.element_screen_position(element)
+        size = element.size
+        window_size = self.driver.get_window_size()
+        return not (pos["top"] + size["height"] < 0 or # above
+                    pos["left"] + size["width"] < 0 or # to the left
+                    pos["top"] > window_size["height"] or # below
+                    pos["left"] > window_size["width"]) # to the right
+
+
+    def completely_visible_to_user(self, element):
+        if not element.is_displayed():
+            return False
+        pos = self.element_screen_position(element)
+        size = element.size
+        window_size = self.driver.get_window_size()
+        return (pos["top"] >= 0 and
+                pos["left"] >= 0 and
+                pos["top"] + size["height"] <= window_size["height"] and
+                pos["left"] + size["width"] <= window_size["width"])
+
+
     def get_selection_text(self):
         """
         Gets the text of the current selection.
 
-        .. node:: This function requires that ``rangy`` be installed.
+        .. note:: This function requires that ``rangy`` be installed.
 
         :returns: The text.
         :rtype: class:`basestring`
         """
         return self.driver.execute_script("""
         return rangy.getSelection(window).toString()
+        """)
+
+
+    def is_something_selected(self):
+        """
+        :returns: Whether something is selected.
+        :rtype: class:`bool`
+        """
+        return self.driver.execute_script("""
+        var sel = window.getSelection();
+        return sel.rangeCount && !sel.getRangeAt(0).collapsed;
         """)
 
 
@@ -132,6 +205,75 @@ class Util(object):
         """
         return WebDriverWait(self.driver, self.timeout).until_not(condition)
 
+
+    def get_html(self, element):
+        """
+        :param element: The element.
+        :type element: :class:`selenium.webdriver.remote.webelement.WebElement`
+        :returns: The HTML of an element.
+        :rtype: :class:`str`
+        """
+        return self.driver.execute_script("""
+        return arguments[0].outerHTML;
+        """, element)
+
+
+    def number_of_siblings(self, element):
+        """
+        :param element: The element.
+        :type element: :class:`selenium.webdriver.remote.webelement.WebElement`
+        :returns: The number of siblings.
+        :rtype: :class:`int`
+        """
+        return self.driver.execute_script("""
+        return arguments[0].parentNode.childNodes.length;
+        """, element)
+
+
+    def assert_same(self, first, second):
+        """
+        Compares two items for identity. The items can be either single
+        values or lists of values. When comparing lists, identity
+        obtains when the two lists have the same number of elements
+        and that the element at position in one list is identical to
+        the element at the same position in the other list.
+
+        This method is meant to be used for comparing lists of DOM
+        notes. It would also work with lists of booleans, integers,
+        and similar primitive types, but is pointless in such
+        cases. Also note that this method cannot meaningfully compare
+        lists of lists or lists of dictionaries since the objects that
+        would be part of the list would be created anew by Selenium's
+        marshalling procedure. Hence, in these cases, the assertion
+        would always fail.
+
+        :param first: The first item to compare.
+        :type first:
+                     :class:`selenium.webdriver.remote.webelement.WebElement`
+                     or array of
+                     :class:`selenium.webdriver.remote.webelement.WebElement`.
+        :param second: The second item to compare.
+        :type second:
+           :class:`selenium.webdriver.remote.webelement.WebElement` or
+           :array of
+           :class:`selenium.webdriver.remote.webelement.WebElement`.
+        :raises: :class:`AssertionError` when unequal.
+        """
+        if not isinstance(first, list):
+            first = [first]
+        if not isinstance(second, list):
+            second = [second]
+        if not self.driver.execute_script("""
+        var first = arguments[0];
+        var second = arguments[1];
+        if (first.length != second.length)
+            return false;
+        for(var i = 0; i < first.length; ++i)
+            if (first[i] !== second[i])
+                return false;
+        return true;
+        """, first, second):
+            raise AssertionError("unequal")
 
 def locations_within(a, b, tolerance):
     """
