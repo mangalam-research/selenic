@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="selenic",
-    version="0.1.0",
+    version="0.1.1",
     packages=find_packages(),
     author="Louis-Dominique Dubeau",
     author_email="ldd@lddubeau.com",
@@ -16,7 +16,7 @@ setup(
         #"Programming Language :: Python :: 3",
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+        "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",
         "Operating System :: POSIX",
         "Topic :: Software Development :: Version Control",
         "Topic :: Software Development :: Quality Assurance"

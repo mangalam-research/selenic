@@ -98,17 +98,79 @@ class Util(object):
         return pos
 
 
-    def visible_to_user(self, element):
+    def visible_to_user(self, element, *ignorable):
+        """
+        Determines whether an element is visible to the user. A list of
+        ignorable elements can be passed to this function. These would
+        typically be things like invisible layers sitting atop other
+        elements. This function ignores these elements by setting
+        their CSS ``display`` parameter to ``none`` before checking,
+        and restoring them to their initial value after checking. The
+        list of ignorable elements should not contain elements that
+        would disturb the position of the element to check if their
+        ``display`` parameter is set to ``none``. Otherwise, the
+        algorithm is likely to fail.
+
+        :param element: The element to check.
+        :type element: :class:`selenium.webdriver.remote.webelement.WebElement`
+        :param ignorable: The elements that can be ignored.
+        :type ignorable: :class:`list` of :strings that are jQuery selectors.
+
+        """
         if not element.is_displayed():
             return False
         pos = self.element_screen_position(element)
         size = element.size
-        window_size = self.driver.get_window_size()
-        return not (pos["top"] + size["height"] < 0 or # above
-                    pos["left"] + size["width"] < 0 or # to the left
-                    pos["top"] > window_size["height"] or # below
-                    pos["left"] > window_size["width"]) # to the right
+        window_size = self.get_window_inner_size()
 
+        # Outside the viewport
+        if (pos["top"] + size["height"] < 0 or # above
+            pos["left"] + size["width"] < 0 or # to the left
+            pos["top"] > window_size["height"] or # below
+            pos["left"] > window_size["width"]): # to the right
+            return False
+
+        return self.driver.execute_script("""
+        var el = arguments[0];
+        var ignorable = arguments[1];
+        var $ = jQuery;
+
+        var old_displays = [];
+        var $ignorable = $(ignorable);
+        ignorable.forEach(function (x) {
+            old_displays.push($(x).css("display"));
+        });
+        $ignorable.css("display", "none");
+        try {
+            var rect = el.getBoundingClientRect();
+            var ret = false;
+
+            var efp = document.elementFromPoint.bind(document);
+            var at_corner;
+            ret = (at_corner = efp(rect.left, rect.top) === el) ||
+                   el.contains(at_corner) ||
+                  (at_corner = efp(rect.left, rect.bottom) === el) ||
+                   el.contains(at_corner) ||
+                  (at_corner = efp(rect.right, rect.top) === el) ||
+                   el.contains(at_corner) ||
+                  (at_corner = efp(rect.right, rect.bottom) === el) ||
+                   el.contains(at_corner);
+        }
+        finally {
+            var ix = 0;
+            ignorable.forEach(function (x) {
+                $(x).css("display", old_displays[ix]);
+                ix++;
+            });
+        }
+        return ret;
+        """, element, ignorable)
+
+
+    def get_window_inner_size(self):
+        return self.driver.execute_script("""
+        return {height: window.innerHeight, width: window.innerWidth};
+        """)
 
     def completely_visible_to_user(self, element):
         if not element.is_displayed():
@@ -288,11 +350,11 @@ def locations_within(a, b, tolerance):
     precision, this is not the function for you.)
 
     Do not rely on this function to determine whether two object have
-    the same keys. If the function returns ``True``, then the two
-    objects have the same keys. If the function returns ``False``,
-    then you cannot infer anything regarding the keys because the
-    function will return ``False`` as soon as it knows that the two
-    locations are **not** within tolerance.
+    the same keys. If the function finds the locations to be within
+    tolerances, then the two objects have the same keys. Otherwise,
+    you cannot infer anything regarding the keys because the function
+    will return as soon as it knows that the two locations are **not**
+    within tolerance.
 
     :param a: First position.
     :type a: :class:`dict`
@@ -300,9 +362,8 @@ def locations_within(a, b, tolerance):
     :type b: :class:`dict`
     :param tolerance: The tolerance within which the two positions
                       must be.
-    :return: An empty string if the comparison is
-             successful. Otherwise, the string contains a description
-             of the differences.
+    :return: An empty string if the comparison is successful. Otherwise,
+             the string contains a description of the differences.
     :rtype: :class:`str`
     :raises ValueError: When a key is present in one object but not
                         the other.
