@@ -12,6 +12,14 @@ class Util(object):
         self._can_set_cookies = driver.name != "internet explorer"
 
     @property
+    def can_set_cookies(self):
+        """
+        ``True`` if the driver we are using is able to set cookies. Bugs in
+        selenium sometimes prevent this from being true.
+        """
+        return self._can_set_cookies
+
+    @property
     def timeout(self):
         return self.timeouts[0]
 
@@ -33,16 +41,13 @@ class Util(object):
         return WebDriverWait(self.driver, self.timeout).until(
             EC.presence_of_element_located(locator))
 
-
     def find_elements(self, locator):
         return WebDriverWait(self.driver, self.timeout).until(
             EC.presence_of_all_elements_located(locator))
 
-
     def find_clickable_element(self, locator):
         return WebDriverWait(self.driver, self.timeout).until(
             EC.element_to_be_clickable(locator))
-
 
     def find_descendants_by_text_re(self, parent, re):
         """
@@ -74,7 +79,6 @@ class Util(object):
         }).text();
         """, element)
 
-
     def element_screen_position(self, element):
         return self.driver.execute_script("""
         var offset = jQuery(arguments[0]).offset();
@@ -82,8 +86,7 @@ class Util(object):
         offset.left -= document.body.scrollLeft;
         return offset;
         """,
-        element)
-
+                                          element)
 
     def element_screen_center(self, element):
         """
@@ -98,7 +101,6 @@ class Util(object):
         pos["top"] += int(size["height"] / 2)
         pos["left"] += int(size["width"] / 2)
         return pos
-
 
     def visible_to_user(self, element, *ignorable):
         """
@@ -126,10 +128,10 @@ class Util(object):
         window_size = self.get_window_inner_size()
 
         # Outside the viewport
-        if (pos["top"] + size["height"] < 0 or # above
-            pos["left"] + size["width"] < 0 or # to the left
-            pos["top"] > window_size["height"] or # below
-            pos["left"] > window_size["width"]): # to the right
+        if (pos["top"] + size["height"] < 0 or  # above
+                pos["left"] + size["width"] < 0 or  # to the left
+                pos["top"] > window_size["height"] or  # below
+                pos["left"] > window_size["width"]):  # to the right
             return False
 
         return self.driver.execute_script("""
@@ -168,7 +170,6 @@ class Util(object):
         return ret;
         """, element, ignorable)
 
-
     def get_window_inner_size(self):
         return self.driver.execute_script("""
         return {height: window.innerHeight, width: window.innerWidth};
@@ -185,7 +186,6 @@ class Util(object):
                 pos["top"] + size["height"] <= window_size["height"] and
                 pos["left"] + size["width"] <= window_size["width"])
 
-
     def get_selection_text(self):
         """
         Gets the text of the current selection.
@@ -199,7 +199,6 @@ class Util(object):
         return rangy.getSelection(window).toString()
         """)
 
-
     def is_something_selected(self):
         """
         :returns: Whether something is selected.
@@ -209,7 +208,6 @@ class Util(object):
         var sel = window.getSelection();
         return sel.rangeCount && !sel.getRangeAt(0).collapsed;
         """)
-
 
     def scroll_top(self, element):
         """
@@ -223,7 +221,6 @@ class Util(object):
         return arguments[0].scrollTop;
         """, element)
 
-
     def window_scroll_top(self):
         """
         Gets the top of the scrolling area for ``window``.
@@ -233,8 +230,6 @@ class Util(object):
         return self.driver.execute_script("""
         return window.scrollY;
         """)
-
-
 
     def window_scroll_left(self):
         """
@@ -246,8 +241,6 @@ class Util(object):
         return window.scrollX;
         """)
 
-
-
     def wait(self, condition):
         """
         Waits for a condition to be true.
@@ -258,7 +251,6 @@ class Util(object):
         """
         return WebDriverWait(self.driver, self.timeout).until(condition)
 
-
     def wait_until_not(self, condition):
         """
         Waits for a condition to be false.
@@ -268,7 +260,6 @@ class Util(object):
         :returns: Whatever ``WebDriverWait.until_not`` returns.
         """
         return WebDriverWait(self.driver, self.timeout).until_not(condition)
-
 
     def get_html(self, element):
         """
@@ -281,7 +272,6 @@ class Util(object):
         return arguments[0].outerHTML;
         """, element)
 
-
     def number_of_siblings(self, element):
         """
         :param element: The element.
@@ -292,7 +282,6 @@ class Util(object):
         return self.driver.execute_script("""
         return arguments[0].parentNode.childNodes.length;
         """, element)
-
 
     def assert_same(self, first, second):
         """
@@ -338,6 +327,7 @@ class Util(object):
         return true;
         """, first, second):
             raise AssertionError("unequal")
+
 
 def locations_within(a, b, tolerance):
     """
