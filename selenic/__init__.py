@@ -3,7 +3,7 @@ from distutils.version import StrictVersion
 from selenium.webdriver.common.action_chains import ActionChains
 import selenium
 
-# To rexport here.
+# To re-export here.
 from .config import *
 
 sel_ver = StrictVersion(selenium.__version__)
