@@ -5,9 +5,14 @@ try:
 except ImportError:
     import simplejson as json
 import os
+from distutils.version import StrictVersion
 
+import selenium
 from selenium import webdriver
 from selenium.webdriver.firefox.webdriver import FirefoxProfile, FirefoxBinary
+from selenium.webdriver.common.by import By
+from selenium.webdriver.remote.webelement import WebElement
+
 
 class Config(object):
 
@@ -23,6 +28,22 @@ class Config(object):
 
         self.local_conf = {}
         execfile(self.config_path, self.local_conf)
+
+        # This effectively lets the user force colon handling on or
+        # off if COLON_HANDLING is defined.
+        colon_handling = self.local_conf.get("COLON_HANDLING", None)
+
+        if colon_handling is None:
+            self.colon_handling = self.local_conf["BROWSER"] == \
+                "INTERNETEXPLORER" and \
+                StrictVersion(
+                    selenium.__version__) <= StrictVersion("2.40.0")
+        elif colon_handling is True:
+            self.colon_handling = True
+        elif colon_handling is False:
+            self.colon_handling = False
+        else:
+            raise Exception("bad value for COLON_HANDLING: " + colon_handling)
 
     def __getattr__(self, name):
         if name in self.local_conf:
@@ -65,9 +86,9 @@ class Config(object):
                     service_log_path=self.local_conf["SERVICE_LOG_PATH"])
             elif browser_string == "FIREFOX":
                 profile = self.local_conf.get("FIREFOX_PROFILE") or \
-                          FirefoxProfile()
+                    FirefoxProfile()
                 binary = self.local_conf.get("FIREFOX_BINARY") or \
-                         FirefoxBinary()
+                    FirefoxBinary()
                 driver = webdriver.Firefox(profile, binary)
             elif browser_string == "INTERNETEXPLORER":
                 driver = webdriver.Ie()
@@ -82,6 +103,9 @@ class Config(object):
                 # ANDROID
                 # PHANTOMJS
                 raise ValueError("can't start a local " + browser_string)
+
+        driver = self.patch(driver)
+
         return driver
 
     def set_test_status(self, jobid, passed=True):
@@ -108,3 +132,31 @@ class Config(object):
                      headers={"Authorization": "Basic " + creds})
         if conn.getresponse() != 200:
             raise Exception("got response: " + conn.getresponse())
+    def patch(self, driver):
+        if self.colon_handling:
+            import types
+            driver.find_element = types.MethodType(make_patched_find_element(
+                driver.find_element), driver)
+            driver.find_elements = types.MethodType(make_patched_find_element(
+                driver.find_elements), driver)
+
+            WebElement.find_element = \
+                make_patched_find_element(WebElement.find_element)
+            WebElement.find_elements = \
+                make_patched_find_element(WebElement.find_elements)
+
+        return driver
+
+
+def make_patched_find_element(original):
+
+    def method(self, by=By.ID, value=None):
+        if By.is_valid(by) and by == By.CLASS_NAME:
+            by = By.CSS_SELECTOR
+            value = "." + value
+
+        if original.im_self:
+            return original(by, value)
+        else:
+            return original(self, by, value)
+    return method
