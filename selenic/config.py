@@ -71,7 +71,7 @@ class Config(object):
         for field in dc_fields:
             desired_capabilities[field] = dc_fields[field]
 
-        if os.environ.get("SELENIUM_SAUCELABS"):
+        if self.local_conf.get("SAUCELABS", False):
             driver = webdriver.Remote(
                 desired_capabilities=desired_capabilities,
                 command_executor="http://" +
