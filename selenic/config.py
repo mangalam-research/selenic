@@ -130,8 +130,10 @@ class Config(object):
         conn.request('PUT', '/rest/v1/%s/jobs/%s' % (username, jobid),
                      json.dumps({"passed": passed}),
                      headers={"Authorization": "Basic " + creds})
-        if conn.getresponse() != 200:
-            raise Exception("got response: " + conn.getresponse())
+        resp = conn.getresponse()
+        if resp.status != 200:
+            raise Exception("got response: " + resp.status)
+
     def patch(self, driver):
         if self.colon_handling:
             import types
