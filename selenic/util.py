@@ -5,9 +5,11 @@ import selenium.webdriver.support.expected_conditions as EC
 
 
 class Util(object):
-    def __init__(self, driver):
+
+    def __init__(self, driver, default_timeout=2):
         self.driver = driver
-        self.timeouts = [2]
+        self.timeouts = [default_timeout]
+        self._can_set_cookies = driver.name != "internet explorer"
 
     @property
     def timeout(self):
