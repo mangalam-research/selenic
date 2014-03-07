@@ -45,6 +45,8 @@ class Config(object):
         else:
             raise Exception("bad value for COLON_HANDLING: " + colon_handling)
 
+        self.remote = self.local_conf.get("SAUCELABS", False)
+
     def __getattr__(self, name):
         if name in self.local_conf:
             return self.local_conf[name]
