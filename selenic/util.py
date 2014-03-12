@@ -2,6 +2,8 @@ import contextlib
 
 from selenium.webdriver.support.ui import WebDriverWait
 import selenium.webdriver.support.expected_conditions as EC
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 
 
 class Util(object):
@@ -9,6 +11,7 @@ class Util(object):
     def __init__(self, driver, default_timeout=2):
         self.driver = driver
         self.timeouts = [default_timeout]
+        self.driver.set_script_timeout(default_timeout)
         self._can_set_cookies = driver.name != "internet explorer"
 
     @property
@@ -33,8 +36,14 @@ class Util(object):
 
     def push_timeout(self, new):
         self.timeouts[0:0] = [new]
+        self.driver.set_script_timeout(new)
 
     def pop_timeout(self):
+        if len(self.timeouts) == 1:
+            raise Exception("can't pop when there is only one element on "
+                            "the stack")
+        # The new timeout is currently in 2nd position.
+        self.driver.set_script_timeout(self.timeouts[1])
         return self.timeouts.pop(0)
 
     def find_element(self, locator):
@@ -71,6 +80,36 @@ class Util(object):
             """, parent, re)
 
         return self.wait(cond)
+
+    #
+    # The key sending methods are here as a sort of insurance policy
+    # againts possible issues with the various drivers that Selenium
+    # uses.  We used to emit sequences like Ctrl-X or Shift-Q as
+    # key_down, send_keys, key_up sequences. However, these sequence
+    # are **really** expensive when using a remote setup. So the
+    # following methods use a single send_keys instead. If this turns
+    # out to be a problem eventually, we can still revers to the
+    # key_down, send_keys, key_up sequence if we ever need to do this.
+    #
+    def ctrl_x(self, x):
+        """
+        Sends a character to the currently active element with Ctrl
+        pressed. This method takes care of pressing and releasing
+        Ctrl.
+        """
+        ActionChains(self.driver) \
+            .send_keys([Keys.CONTROL, x, Keys.CONTROL]) \
+            .perform()
+
+    def send_keys(self, element, x):
+        """
+        Sends keys to the element. This method takes care of handling
+        modifiers keys. To press and release a modifier key you must
+        include it twice: once to press, once to release.
+        """
+        ActionChains(self.driver) \
+            .send_keys_to_element(element, x) \
+            .perform()
 
     def get_text_excluding_children(self, element):
         return self.driver.execute_script("""
