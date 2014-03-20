@@ -120,9 +120,11 @@ class Util(object):
 
     def element_screen_position(self, element):
         return self.driver.execute_script("""
-        var offset = jQuery(arguments[0]).offset();
-        offset.top -= document.body.scrollTop;
-        offset.left -= document.body.scrollLeft;
+        var $ = jQuery;
+        var offset = $(arguments[0]).offset();
+        var $document = $(document);
+        offset.top -= $document.scrollTop();
+        offset.left -= $document.scrollLeft();
         return offset;
         """,
                                           element)
