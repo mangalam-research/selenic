@@ -73,7 +73,7 @@ class Config(object):
         for field in dc_fields:
             desired_capabilities[field] = dc_fields[field]
 
-        if self.local_conf.get("SAUCELABS", False):
+        if self.remote:
             driver = webdriver.Remote(
                 desired_capabilities=desired_capabilities,
                 command_executor="http://" +
@@ -123,8 +123,9 @@ class Config(object):
         :type passed: :class:`bool`
         :raises Exception: When it can't set the status.
         """
-        if os.environ.get("SELENIUM_SAUCELABS") is None:
+        if not self.remote:
             return
+
         (username, key) = self.local_conf["SAUCELABS_CREDENTIALS"].split(":")
         creds = base64.encodestring('%s:%s' % (username, key))[:-1]
 
