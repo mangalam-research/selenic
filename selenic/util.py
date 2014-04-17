@@ -13,6 +13,14 @@ class Util(object):
         self.timeouts = [default_timeout]
         self.driver.set_script_timeout(default_timeout)
         self._can_set_cookies = driver.name != "internet explorer"
+        self.osx = driver.desired_capabilities[
+            "platform"].startswith("Mac OS X")
+        self.ctrl_equivalent_x = self.command_x if self.osx else self.ctrl_x
+        """
+        When controlling a browser running in a platform other than OS X,
+        equivalent to `:func:Util.ctrl_x`. Otherwise, equivalent to
+        `:func:Util.command_x:`.
+        """
 
     @property
     def can_set_cookies(self):
@@ -99,6 +107,26 @@ class Util(object):
         """
         ActionChains(self.driver) \
             .send_keys([Keys.CONTROL, x, Keys.CONTROL]) \
+            .perform()
+
+    #
+    # The key sending methods are here as a sort of insurance policy
+    # againts possible issues with the various drivers that Selenium
+    # uses.  We used to emit sequences like Ctrl-X or Shift-Q as
+    # key_down, send_keys, key_up sequences. However, these sequence
+    # are **really** expensive when using a remote setup. So the
+    # following methods use a single send_keys instead. If this turns
+    # out to be a problem eventually, we can still revers to the
+    # key_down, send_keys, key_up sequence if we ever need to do this.
+    #
+    def command_x(self, x):
+        """
+        Sends a character to the currently active element with Command
+        pressed. This method takes care of pressing and releasing
+        Command.
+        """
+        ActionChains(self.driver) \
+            .send_keys([Keys.COMMAND, x, Keys.COMMAND]) \
             .perform()
 
     def send_keys(self, element, x):
