@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="selenic",
-    version="0.2.0",
+    version="0.3.0",
     packages=find_packages(),
     author="Louis-Dominique Dubeau",
     author_email="ldd@lddubeau.com",
