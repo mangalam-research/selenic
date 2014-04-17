@@ -85,7 +85,8 @@ class Config(object):
                     self.local_conf["CHROMEDRIVER_PATH"],
                     chrome_options=self.local_conf.get("CHROME_OPTIONS"),
                     desired_capabilities=desired_capabilities,
-                    service_log_path=self.local_conf["SERVICE_LOG_PATH"])
+                    service_log_path=self.local_conf["SERVICE_LOG_PATH"],
+                    service_args=self.local_conf.get("SERVICE_ARGS"))
             elif browser_string == "FIREFOX":
                 profile = self.local_conf.get("FIREFOX_PROFILE") or \
                     FirefoxProfile()
