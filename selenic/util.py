@@ -12,9 +12,15 @@ class Util(object):
         self.driver = driver
         self.timeouts = [default_timeout]
         self.driver.set_script_timeout(default_timeout)
-        self._can_set_cookies = driver.name != "internet explorer"
         self.osx = driver.desired_capabilities[
             "platform"].startswith("Mac OS X")
+
+        self.windows = driver.desired_capabilities["platform"] == "XP"
+
+        self.firefox = driver.name == "firefox"
+        self.ie = driver.name == "internet explorer"
+        self._can_set_cookies = not self.ie
+
         self.ctrl_equivalent_x = self.command_x if self.osx else self.ctrl_x
         """
         When controlling a browser running in a platform other than OS X,
