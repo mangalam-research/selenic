@@ -105,15 +105,18 @@ class Util(object):
     # out to be a problem eventually, we can still revert to the
     # key_down, send_keys, key_up sequence if we ever need to do this.
     #
-    def ctrl_x(self, x):
+    def ctrl_x(self, x, to=None):
         """
         Sends a character to the currently active element with Ctrl
         pressed. This method takes care of pressing and releasing
         Ctrl.
         """
-        ActionChains(self.driver) \
-            .send_keys([Keys.CONTROL, x, Keys.CONTROL]) \
-            .perform()
+        if to is None:
+            ActionChains(self.driver) \
+                .send_keys([Keys.CONTROL, x, Keys.CONTROL]) \
+                .perform()
+        else:
+            self.send_keys(to, [Keys.CONTROL, x, Keys.CONTROL])
 
     #
     # The key sending methods are here as a sort of insurance policy
@@ -125,15 +128,18 @@ class Util(object):
     # out to be a problem eventually, we can still revert to the
     # key_down, send_keys, key_up sequence if we ever need to do this.
     #
-    def command_x(self, x):
+    def command_x(self, x, to=None):
         """
         Sends a character to the currently active element with Command
         pressed. This method takes care of pressing and releasing
         Command.
         """
-        ActionChains(self.driver) \
-            .send_keys([Keys.COMMAND, x, Keys.COMMAND]) \
-            .perform()
+        if to is None:
+            ActionChains(self.driver) \
+                .send_keys([Keys.COMMAND, x, Keys.COMMAND]) \
+                .perform()
+        else:
+            self.send_keys(to, [Keys.COMMAND, x, Keys.COMMAND])
 
     def send_keys(self, element, x):
         """
