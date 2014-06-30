@@ -97,12 +97,12 @@ class Util(object):
 
     #
     # The key sending methods are here as a sort of insurance policy
-    # againts possible issues with the various drivers that Selenium
+    # against possible issues with the various drivers that Selenium
     # uses.  We used to emit sequences like Ctrl-X or Shift-Q as
     # key_down, send_keys, key_up sequences. However, these sequence
     # are **really** expensive when using a remote setup. So the
     # following methods use a single send_keys instead. If this turns
-    # out to be a problem eventually, we can still revers to the
+    # out to be a problem eventually, we can still revert to the
     # key_down, send_keys, key_up sequence if we ever need to do this.
     #
     def ctrl_x(self, x):
@@ -117,12 +117,12 @@ class Util(object):
 
     #
     # The key sending methods are here as a sort of insurance policy
-    # againts possible issues with the various drivers that Selenium
+    # against possible issues with the various drivers that Selenium
     # uses.  We used to emit sequences like Ctrl-X or Shift-Q as
     # key_down, send_keys, key_up sequences. However, these sequence
     # are **really** expensive when using a remote setup. So the
     # following methods use a single send_keys instead. If this turns
-    # out to be a problem eventually, we can still revers to the
+    # out to be a problem eventually, we can still revert to the
     # key_down, send_keys, key_up sequence if we ever need to do this.
     #
     def command_x(self, x):
@@ -367,7 +367,7 @@ class Util(object):
         the element at the same position in the other list.
 
         This method is meant to be used for comparing lists of DOM
-        notes. It would also work with lists of booleans, integers,
+        nodes. It would also work with lists of booleans, integers,
         and similar primitive types, but is pointless in such
         cases. Also note that this method cannot meaningfully compare
         lists of lists or lists of dictionaries since the objects that
