@@ -9,8 +9,8 @@ chromedriver. Chromedriver is `here
 documentation for its use is `here
 <http://code.google.com/p/selenium/wiki/ChromeDriver>`__.
 
-Please look at the examples in `<examples>`_ and read the source code
-to know how this all works.
+Please look at the examples in the ``examples`` subdirectory and read
+the source code to know how this all works.
 
 Selenium Issues
 ===============
