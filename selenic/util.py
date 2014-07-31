@@ -19,7 +19,9 @@ class Util(object):
 
         self.firefox = driver.name == "firefox"
         self.ie = driver.name == "internet explorer"
-        self._can_set_cookies = not self.ie
+        # Only IE 9 or earlier has a problem with setting cookies...
+        self._can_set_cookies = not (
+            self.ie and int(driver.desired_capabilities["version"]) <= 9)
 
         self.ctrl_equivalent_x = self.command_x if self.osx else self.ctrl_x
         """
