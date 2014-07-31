@@ -15,7 +15,11 @@ class Util(object):
         self.osx = driver.desired_capabilities[
             "platform"].startswith("Mac OS X")
 
-        self.windows = driver.desired_capabilities["platform"] == "XP"
+        # Saucelabs sets this inconsistently. When requiring FF on
+        # Windows 8.1, we get "XP". When requiring IE on Windows 8.1,
+        # we get "WINDOWS". Yuck!
+        self.windows = driver.desired_capabilities["platform"] in \
+            ("XP", "WINDOWS")
 
         self.firefox = driver.name == "firefox"
         self.ie = driver.name == "internet explorer"
