@@ -1,3 +1,5 @@
+from selenic import Config
+
 #
 # This file gives you an overview of what selenium-config is able to
 # work with. Settings that are not documented ought to be evident to
@@ -6,26 +8,26 @@
 
 SAUCELABS_CREDENTIALS = "userid:key"
 
-# Must be the name of a set of desired capabilities present in
-# selenium.webdriver.common.desired_capabilities.
-BROWSER = "FIREFOX"
-
-# Set the desired capabilities of the browser.
-DESIRED_CAPABILITIES = {
-    "platform": "Linux"
+caps = {
+    "nativeEvents": True
 }
+
+# This config would execute on SauceLabs because it is remote.
+CONFIG = Config("Windows 8.1", "CHROME", "36", caps, remote=True)
 
 #
 # CHROME settings
 #
 
+# Only useful when running Chrome locally.
 CHROMEDRIVER_PATH = "/blah/blah/chromedriver"
 
-# Only useful when running Chrome locally
+# Only useful when running Chrome locally.
 SERVICE_LOG_PATH = "/tmp/log"
 
 from selenium.webdriver.chrome.options import Options
 CHROME_OPTIONS = Options()
+# Probably not something that makes sense remotely.
 CHROME_OPTIONS.binary_location = "/blah"
 
 #

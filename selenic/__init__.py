@@ -5,6 +5,7 @@ import selenium
 
 # To re-export here.
 from .config import *
+from .builder import *
 
 sel_ver = StrictVersion(selenium.__version__)
 v2_35_0 = StrictVersion("2.35.0")
