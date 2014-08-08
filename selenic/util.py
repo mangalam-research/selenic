@@ -93,9 +93,11 @@ class Util(object):
             return self.driver.execute_script("""
             var parent = arguments[0];
             var re = new RegExp(arguments[1]);
-            return jQuery(parent).find("*").filter(function () {
-            return re.test(jQuery(this).text().trim());
-            }).toArray();
+            var ret = [];
+            var nodes = parent.querySelectorAll("*");
+            for(var i = 0, node; (node = nodes[i]) !== undefined; ++i)
+                if (re.test(node.textContent.trim()))
+                    ret.push(node);
             return ret;
             """, parent, re)
 
@@ -159,21 +161,22 @@ class Util(object):
 
     def get_text_excluding_children(self, element):
         return self.driver.execute_script("""
-        return jQuery(arguments[0]).contents().filter(function() {
-            return this.nodeType == Node.TEXT_NODE;
-        }).text();
+        var parent = arguments[0];
+        var child = parent.firstChild;
+        var ret = "";
+        while(child) {
+            if (child.nodeType === Node.TEXT_NODE)
+                ret += child.textContent;
+            child = child.nextSibling;
+        }
+        return ret;
         """, element)
 
     def element_screen_position(self, element):
         return self.driver.execute_script("""
-        var $ = jQuery;
-        var offset = $(arguments[0]).offset();
-        var $document = $(document);
-        offset.top -= $document.scrollTop();
-        offset.left -= $document.scrollLeft();
-        return offset;
-        """,
-                                          element)
+        var rect = arguments[0].getBoundingClientRect();
+        return {left: rect.left, top: rect.top};
+        """, element)
 
     def element_screen_center(self, element):
         """
@@ -205,7 +208,7 @@ class Util(object):
         :param element: The element to check.
         :type element: :class:`selenium.webdriver.remote.webelement.WebElement`
         :param ignorable: The elements that can be ignored.
-        :type ignorable: :class:`list` of :strings that are jQuery selectors.
+        :type ignorable: :class:`list` of :strings that are CSS selectors.
 
         """
         if not element.is_displayed():
@@ -224,14 +227,12 @@ class Util(object):
         return self.driver.execute_script("""
         var el = arguments[0];
         var ignorable = arguments[1];
-        var $ = jQuery;
 
-        var old_displays = [];
-        var $ignorable = $(ignorable);
-        ignorable.forEach(function (x) {
-            old_displays.push($(x).css("display"));
+        var old_displays = ignorable.map(function (x) {
+            var old = x.style.display;
+            x.style.display = "none";
+            return old;
         });
-        $ignorable.css("display", "none");
         try {
             var rect = el.getBoundingClientRect();
             var ret = false;
@@ -250,7 +251,7 @@ class Util(object):
         finally {
             var ix = 0;
             ignorable.forEach(function (x) {
-                $(x).css("display", old_displays[ix]);
+                x.style.display = old_displays[ix];
                 ix++;
             });
         }
