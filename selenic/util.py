@@ -239,13 +239,13 @@ class Util(object):
 
             var efp = document.elementFromPoint.bind(document);
             var at_corner;
-            ret = (at_corner = efp(rect.left, rect.top) === el) ||
+            ret = ((at_corner = efp(rect.left, rect.top)) === el) ||
                    el.contains(at_corner) ||
-                  (at_corner = efp(rect.left, rect.bottom) === el) ||
+                  ((at_corner = efp(rect.left, rect.bottom)) === el) ||
                    el.contains(at_corner) ||
-                  (at_corner = efp(rect.right, rect.top) === el) ||
+                  ((at_corner = efp(rect.right, rect.top)) === el) ||
                    el.contains(at_corner) ||
-                  (at_corner = efp(rect.right, rect.bottom) === el) ||
+                  ((at_corner = efp(rect.right, rect.bottom)) === el) ||
                    el.contains(at_corner);
         }
         finally {
