@@ -213,17 +213,6 @@ class Util(object):
         """
         if not element.is_displayed():
             return False
-        pos = self.element_screen_position(element)
-        size = element.size
-        window_size = self.get_window_inner_size()
-
-        # Outside the viewport
-        if (pos["top"] + size["height"] < 0 or  # above
-                pos["left"] + size["width"] < 0 or  # to the left
-                pos["top"] > window_size["height"] or  # below
-                pos["left"] > window_size["width"]):  # to the right
-            return False
-
         return self.driver.execute_script("""
         var el = arguments[0];
         var ignorable = arguments[1];
