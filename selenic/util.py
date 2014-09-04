@@ -78,12 +78,20 @@ class Util(object):
         return WebDriverWait(self.driver, self.timeout).until(
             EC.element_to_be_clickable(locator))
 
-    def find_descendants_by_text_re(self, parent, re):
+    def find_descendants_by_text_re(self, parent, re, immediate=False):
         """
         :param parent: The parent element into which to search.
-        :type parent: :class:`selenium.webdriver.remote.webelement.WebElement`
+        :type parent:
+                      :class:`selenium.webdriver.remote.webelement.WebElement`
+                      or :class:`str`. When a string is specified, it
+                      is interpreted as a CSS selector.
         :param re: A regular expression in JavaScript syntax.
         :type re: :class:`str`
+        :param immediate: Whether or not the function should return
+                          immediately. If ``False``, the function will
+                          wait until there **are** descendants to
+                          return. If ``True`` it will return immediately.
+        :type immediate: :class:`bool`
         :returns: The descendants whose text (as returned by
                   ``jQuery().text()``) match the regular expression.
 
@@ -92,6 +100,8 @@ class Util(object):
         def cond(*_):
             return self.driver.execute_script("""
             var parent = arguments[0];
+            if (typeof parent === "string")
+                parent = document.querySelector(parent);
             var re = new RegExp(arguments[1]);
             var ret = [];
             var nodes = parent.querySelectorAll("*");
@@ -101,7 +111,7 @@ class Util(object):
             return ret;
             """, parent, re)
 
-        return self.wait(cond)
+        return self.wait(cond) if not immediate else cond()
 
     #
     # The key sending methods are here as a sort of insurance policy
