@@ -4,6 +4,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 import selenium.webdriver.support.expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.wait import TimeoutException
 
 
 class Util(object):
@@ -463,3 +464,65 @@ def locations_within(a, b, tolerance):
         raise ValueError("keys in b not seen in a: " + ", ".join(b.keys()))
 
     return ret
+
+
+class Condition(object):
+
+    """
+    ``Condition`` objects are used for waiting on conditions where
+    failing to attain the desired condition should not result in a
+    ``TimeoutException``. This object allows obtaining the last return
+    value of the condition check rather than dealing with a
+    ``TimeoutException`` that does not provide any useful information.
+    """
+
+    def __init__(self, util, check):
+        """
+        :param util: The ``Util`` object to use to perform the wait.
+        :type util: :class:`Util`
+        :param check: The check to perform.
+        :type check: A callable.
+        """
+        self.util = util
+        self.check = check
+        self.last_return = None
+        self.called = False
+
+    def __call__(self, *args, **kwargs):
+        self.last_return = self.check(*args, **kwargs)
+        self.called = True
+        return self.last_return
+
+    def wait(self):
+        """
+        Wait until the check performed by ``self.check`` is true, or the
+        timeout occurs.
+
+        :returns: Whatever ``self.check`` last returned, whether there
+                  was a timeout or not.
+        """
+        try:
+            self.util.wait(self)
+        except TimeoutException:
+            pass
+        return self.last_return
+
+
+class Result(object):
+
+    """
+    ``Result`` objects are meant to be used with
+    :class:``Condition``. They evaluate to a boolean value according
+    to the boolean value of their ``result`` property.
+    """
+
+    def __init__(self, result, payload):
+        """
+        :param result: The result that this object should contain.
+        :param payload: Some additional payload.
+        """
+        self.result = result
+        self.payload = payload
+
+    def __nonzero__(self, *args, **kwargs):
+        return self.result
