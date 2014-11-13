@@ -13,17 +13,20 @@ class Util(object):
         self.driver = driver
         self.timeouts = [default_timeout]
         self.driver.set_script_timeout(default_timeout)
+
         self.osx = driver.desired_capabilities[
             "platform"].startswith("Mac OS X")
-
         # Saucelabs sets this inconsistently. When requiring FF on
         # Windows 8.1, we get "XP". When requiring IE on Windows 8.1,
         # we get "WINDOWS". Yuck!
         self.windows = driver.desired_capabilities["platform"] in \
             ("XP", "WINDOWS")
+        self.linux = driver.desired_capabilities["platform"] == "Linux"
 
         self.firefox = driver.name == "firefox"
         self.ie = driver.name == "internet explorer"
+        self.chrome = driver.name == "chrome"
+
         # Only IE 9 or earlier has a problem with setting cookies...
         self._can_set_cookies = not (
             self.ie and int(driver.desired_capabilities["version"]) <= 9)
@@ -130,12 +133,25 @@ class Util(object):
         pressed. This method takes care of pressing and releasing
         Ctrl.
         """
+        seq = [Keys.CONTROL, x, Keys.CONTROL]
+
+        # This works around a bug in Selenium that happens in FF on
+        # Windows.
+        #
+        # The bug was reported here:
+        #
+        # https://code.google.com/p/selenium/issues/detail?id=7303
+        #
+        if (self.firefox and self.windows) or \
+           (self.linux and self.chrome):
+            seq.append(Keys.PAUSE)
+
         if to is None:
             ActionChains(self.driver) \
-                .send_keys([Keys.CONTROL, x, Keys.CONTROL]) \
+                .send_keys(seq) \
                 .perform()
         else:
-            self.send_keys(to, [Keys.CONTROL, x, Keys.CONTROL])
+            self.send_keys(to, seq)
 
     #
     # The key sending methods are here as a sort of insurance policy
@@ -235,6 +251,14 @@ class Util(object):
         });
         try {
             var rect = el.getBoundingClientRect();
+            // Sigh... we need to round the numbers to avoid running into
+            // factional pixels causing the following test to fail.
+            rect = {
+              left: Math.ceil(rect.left),
+              right: Math.floor(rect.right),
+              top: Math.ceil(rect.top),
+              bottom: Math.floor(rect.bottom)
+            }
             var ret = false;
 
             var efp = document.elementFromPoint.bind(document);
