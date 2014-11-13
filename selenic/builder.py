@@ -104,7 +104,8 @@ class Builder(object):
                 raise ValueError("can't start a local " + browser_string)
 
             # Check that what we get is what the config wanted...
-            if driver.desired_capabilities["platform"] != self.config.platform:
+            if driver.desired_capabilities["platform"].upper() \
+               != self.config.platform:
                 raise ValueError("the platform you want is not the one "
                                  "you are running selenic on")
             if re.sub(r"\..*$", "", driver.desired_capabilities["version"]) != \

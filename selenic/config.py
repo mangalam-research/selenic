@@ -9,8 +9,20 @@ _configs_by_platform = {}
 _configs_by_browser = {}
 _configs_by_version = {}
 
+_BROWSER_ABBRS = {
+    "IE": "INTERNETEXPLORER",
+    "FF": "FIREFOX",
+    "CH": "CHROME"
+}
 
 def get_config(platform=None, browser=None, version=None):
+    browser = browser.upper() if browser is not None else None
+    platform = platform.upper() if platform is not None else None
+
+    # Resolve abbreviation if it exists...
+    browser = _BROWSER_ABBRS.get(browser, browser) \
+        if browser is not None else None
+
     if platform is not None and browser is not None and version is not None:
         return configs[ConfigTuple(platform, browser, version)]
 
@@ -42,6 +54,16 @@ def get_config(platform=None, browser=None, version=None):
     return ret.pop()
 
 
+def forget():
+    # pylint: disable=global-statement
+    global configs, _configs_by_platform, _configs_by_browser, \
+        _configs_by_version
+    configs = {}
+    _configs_by_platform = {}
+    _configs_by_browser = {}
+    _configs_by_version = {}
+
+
 class Config(object):
 
     def __init__(self, platform, browser, version, desired_capabilities=None,
@@ -49,6 +71,12 @@ class Config(object):
 
         if desired_capabilities is None:
             desired_capabilities = {}
+
+        browser = browser.upper() if browser is not None else None
+        platform = platform.upper() if platform is not None else None
+
+        # Resolve abbreviation if it exists...
+        browser = _BROWSER_ABBRS.get(browser, browser)
 
         self.platform = platform
         self.browser = browser
