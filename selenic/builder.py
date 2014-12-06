@@ -1,4 +1,5 @@
 import re
+import os
 import httplib
 import base64
 try:
@@ -56,17 +57,27 @@ class Builder(object):
         raise AttributeError("{!r} object has no attribute {!r}"
                              .format(self.__class__, name))
 
-    def get_driver(self):
+    def get_driver(self, desired_capabilities=None):
         """
         Creates a Selenium driver on the basis of the configuration file
         upon which this object was created.
 
+        :param desired_capabilities: Capabilities that the caller
+            desires to override. This have priority over those
+            capabilities that are set by the configuration file passed
+            to the builder.
+        :type desired_capabilities: class:`dict`
         :returns: A driver.
         :raises ValueError: When it can't figure out how to create a
                             browser as specified by the BROWSER
                             configuration variable.
         """
-        desired_capabilities = self.config.make_selenium_desired_capabilities()
+        override_caps = desired_capabilities or {}
+
+        desired_capabilities = \
+            self.config.make_selenium_desired_capabilities()
+        desired_capabilities.update(override_caps)
+
         browser_string = self.config.browser
 
         if self.remote:
@@ -115,6 +126,35 @@ class Builder(object):
 
         driver = self.patch(driver)
         return driver
+
+    def update_ff_binary_env(self, variable):
+        """
+        If a ``FIREFOX_BINARY`` was specified, this method updates an
+        environment variable used by the ``FirefoxBinary`` instance to
+        the current value of the variable in the environment.
+
+        This method is a no-op if ``FIREFOX_BINARY`` has not been
+        specified or if the configured browser is not Firefox.
+
+        A common use-case for this method is updating ``DISPLAY`` once
+        an Xvfb or Xephyr instance has been launched. Typically, by
+        the time these displays are launched, the configuration file
+        has already been loaded and whatever ``FirefoxBinary``
+        instance was created for ``FIREFOX_BINARY`` has a stale
+        ``DISPLAY`` value.
+
+        :param variable: The name of the variable to update.
+        :type variable: :class:`str`
+        """
+        if self.config.browser != 'FIREFOX':
+            return
+
+        binary = self.local_conf.get('FIREFOX_BINARY')
+        if binary is None:
+            return
+
+        # pylint: disable=protected-access
+        binary._firefox_env[variable] = os.environ[variable]
 
     def set_test_status(self, jobid, passed=True):
         """
