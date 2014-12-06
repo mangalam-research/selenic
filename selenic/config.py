@@ -1,8 +1,13 @@
 from selenium import webdriver
 import collections
 
-ConfigTuple = collections.namedtuple(
-    'ConfigTuple', ('platform', 'browser', 'version'))
+class ConfigTuple(collections.namedtuple(
+        'ConfigTuple',
+        ('platform', 'browser', 'version'))):
+
+    def as_parameter(self, separator=","):
+        return self.platform + separator + self.browser + separator \
+            + self.version
 
 configs = {}
 _configs_by_platform = {}
