@@ -9,7 +9,7 @@ class ConfigTuple(collections.namedtuple(
         return self.platform + separator + self.browser + separator \
             + self.version
 
-configs = {}
+configs = collections.OrderedDict()
 _configs_by_platform = {}
 _configs_by_browser = {}
 _configs_by_version = {}
