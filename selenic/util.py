@@ -60,14 +60,11 @@ class Util(object):
 
     def push_timeout(self, new):
         self.timeouts[0:0] = [new]
-        self.driver.set_script_timeout(new)
 
     def pop_timeout(self):
         if len(self.timeouts) == 1:
             raise Exception("can't pop when there is only one element on "
                             "the stack")
-        # The new timeout is currently in 2nd position.
-        self.driver.set_script_timeout(self.timeouts[1])
         return self.timeouts.pop(0)
 
     def find_element(self, locator):
