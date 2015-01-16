@@ -1,8 +1,10 @@
 from setuptools import setup, find_packages
 
+version = open('VERSION').read().strip()
+
 setup(
     name="selenic",
-    version="0.5.0",
+    version=version,
     packages=find_packages(),
     author="Louis-Dominique Dubeau",
     author_email="ldd@lddubeau.com",
