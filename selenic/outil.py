@@ -1,5 +1,8 @@
 import socket
 import subprocess
+import os
+import tempfile
+import time
 
 def get_unused_port():
     """
@@ -83,3 +86,24 @@ def get_unused_sauce_port():
             break
 
     return port
+
+def start_sc(path, user, key):
+    tmpdir = tempfile.mkdtemp()
+    pidfile_path = os.path.join(tmpdir, "pid")
+    logfile_path = os.path.join(tmpdir, "log")
+    readyfile_path = os.path.join(tmpdir, "ready")
+
+    sc_tunnel_id = "sc-tunnel-for-" + str(os.getpid())
+    sc_tunnel = subprocess.Popen(
+        [path, "-u", user, "-k", key,
+         "--se-port", "0", "--logfile", logfile_path,
+         "--pidfile", pidfile_path, "--readyfile",
+         readyfile_path, "--tunnel-identifier", sc_tunnel_id])
+    while True:
+        if os.path.exists(readyfile_path):
+            break
+        if sc_tunnel.poll():
+            raise Exception("tunnel exited prematurely")
+        time.sleep(0.2)
+
+    return (sc_tunnel, sc_tunnel_id, tmpdir)
