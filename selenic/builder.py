@@ -77,7 +77,6 @@ class Builder(object):
         desired_capabilities = \
             self.config.make_selenium_desired_capabilities()
         desired_capabilities.update(override_caps)
-
         browser_string = self.config.browser
 
         if self.remote:
@@ -99,7 +98,8 @@ class Builder(object):
                     FirefoxProfile()
                 binary = self.local_conf.get("FIREFOX_BINARY") or \
                     FirefoxBinary()
-                driver = webdriver.Firefox(profile, binary)
+                driver = webdriver.Firefox(profile, binary,
+                                           capabilities=desired_capabilities)
             elif browser_string == "INTERNETEXPLORER":
                 driver = webdriver.Ie()
             elif browser_string == "OPERA":
