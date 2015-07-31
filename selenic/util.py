@@ -133,14 +133,13 @@ class Util(object):
         seq = [Keys.CONTROL, x, Keys.CONTROL]
 
         # This works around a bug in Selenium that happens in FF on
-        # Windows.
+        # Windows, and in Chrome on Linux.
         #
         # The bug was reported here:
         #
         # https://code.google.com/p/selenium/issues/detail?id=7303
         #
-        if (self.firefox and self.windows) or \
-           (self.linux and self.chrome):
+        if (self.firefox and self.windows) or (self.linux and self.chrome):
             seq.append(Keys.PAUSE)
 
         if to is None:
