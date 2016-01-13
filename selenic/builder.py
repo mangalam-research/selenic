@@ -17,17 +17,22 @@ from selenium.webdriver.remote.webelement import WebElement
 
 class Builder(object):
 
-    def __init__(self, config_path):
+    def __init__(self, config_path, options):
         """
         Initializes a configuration.
 
         :param config_path: The configuration file to use. Must be a valid
                             Python file.
         :type config_path: :class:`basestring`
+        :param options: A dictionary of key/value pairs with which the
+                        global variable ``builder_args`` will be initialized
+                        before the configuration is read.
         """
         self.config_path = config_path
 
-        self.local_conf = {}
+        self.local_conf = {
+            'builder_args': options
+        }
         execfile(self.config_path, self.local_conf)
 
         # This effectively lets the user force colon handling on or
