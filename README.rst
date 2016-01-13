@@ -35,6 +35,39 @@ Misc
   names in IE is completely broken. Selenic attempts to fix the
   issue. See below for some notes.
 
+Chromedriver and ``ActionChains.move_to_element``
+-------------------------------------------------
+
+The Changelog for Chromedriver 2.14 says:
+
+ Getting the location of an element, and moving the mouse to an
+ element, now uses the center of the first ClientRect, rather than the
+ center of the bounding box.
+
+This is in direct violation of the specifications of
+``move_to_element``. The issue has been reported `here
+<https://bugs.chromium.org/p/chromedriver/issues/detail?id=1069>`_ but
+the people reponsible are in no hurry to fix it. (At the time of
+writing, it's been 9 months between the submission of the issue.)
+
+If Selenic is asked to create a driver for Chrome and it detects a
+Chromedriver version greater than 2.13, it patches ``ActionChains`` so
+that when an ``ActionChains`` object is created for a driver that
+needs the patch, then ``move_to_element`` on the new instance is
+patched to get the element's center with
+``getBoundingClientRect``. Upshots:
+
+1. Selenic won't patch ``ActionChains`` *at all* unless it is tasked
+   with creating a driver that will work with a Chromedriver version
+   greater than 2.13.
+
+2. Once Selenic has patched ``ActionChains`` it is patched for
+   good. This means that if if a driver instance for IE is then
+   created it will use the patched ``ActionChains``. However, the new
+   ``ActionChains`` constructor checks whether the driver for which it
+   creates a new instance needs the ``move_to_element`` patch and
+   patches accordingly.
+
 Colons in Class Names in IE
 ---------------------------
 

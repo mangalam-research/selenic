@@ -1,5 +1,7 @@
 import re
 import os
+import subprocess
+import types
 import httplib
 import base64
 try:
@@ -11,9 +13,12 @@ from distutils.version import StrictVersion
 import selenium
 from selenium import webdriver
 from selenium.webdriver.firefox.webdriver import FirefoxProfile, FirefoxBinary
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
+CHROMEDRIVER_ELEMENT_CENTER_PATCH_FLAG = \
+    "_selenic_chromedriver_element_center_patch"
 
 class Builder(object):
 
@@ -84,20 +89,36 @@ class Builder(object):
         desired_capabilities.update(override_caps)
         browser_string = self.config.browser
 
+        chromedriver_version = None
         if self.remote:
             driver = webdriver.Remote(
                 desired_capabilities=desired_capabilities,
                 command_executor="http://" +
                 self.local_conf["SAUCELABS_CREDENTIALS"] +
                 "@ondemand.saucelabs.com:80/wd/hub")
+            if browser_string == "CHROME":
+                chromedriver_version = \
+                    desired_capabilities.get("chromedriver-version", None)
+                if chromedriver_version is None:
+                    raise ValueError(
+                        "when using Chrome, you must set a "
+                        "``chromedriver-version`` capability so that Selenic "
+                        "can detect which version of Chromedriver will "
+                        "be used.")
         else:
             if browser_string == "CHROME":
+                chromedriver_path = self.local_conf["CHROMEDRIVER_PATH"]
                 driver = webdriver.Chrome(
-                    self.local_conf["CHROMEDRIVER_PATH"],
+                    chromedriver_path,
                     chrome_options=self.local_conf.get("CHROME_OPTIONS"),
                     desired_capabilities=desired_capabilities,
                     service_log_path=self.local_conf["SERVICE_LOG_PATH"],
                     service_args=self.local_conf.get("SERVICE_ARGS"))
+                version_line = subprocess.check_output(
+                    [chromedriver_path, "--version"])
+                version_str = re.match(ur"^ChromeDriver (\d+\.\d+)",
+                                       version_line).group(1)
+                chromedriver_version = StrictVersion(version_str)
             elif browser_string == "FIREFOX":
                 profile = self.local_conf.get("FIREFOX_PROFILE") or \
                     FirefoxProfile()
@@ -128,6 +149,13 @@ class Builder(object):
                self.config.version:
                 raise ValueError("the version installed is not the one "
                                  "you wanted")
+
+        if chromedriver_version is not None and \
+           chromedriver_version > StrictVersion("2.13"):
+            # We patch ActionChains.
+            chromedriver_element_center_patch()
+            # We need to mark the driver as needing the patch.
+            setattr(driver, CHROMEDRIVER_ELEMENT_CENTER_PATCH_FLAG, True)
 
         driver = self.patch(driver)
         return driver
@@ -216,3 +244,41 @@ def make_patched_find_element(original):
         else:
             return original(self, by, value)
     return method
+
+
+def chromedriver_element_center_patch():
+    """
+    Patch move_to_element on ActionChains to work around a bug present
+    in Chromedriver 2.14 to 2.20.
+
+    Calling this function multiple times in the same process will
+    install the patch once, and just once.
+    """
+
+    patch_name = "_selenic_chromedriver_element_center_patched"
+    if getattr(ActionChains, patch_name, None):
+        return  # We've patched ActionChains already!!
+
+    # This is the patched method, which uses getBoundingClientRect
+    # to get the location of the center.
+    def move_to_element(self, el):
+        pos = self._driver.execute_script("""
+        var rect = arguments[0].getBoundingClientRect();
+        return { x: rect.width / 2, y: rect.height / 2};
+        """, el)
+        self.move_to_element_with_offset(el, pos["x"], pos["y"])
+        return self
+
+    old_init = ActionChains.__init__
+
+    def init(self, driver):
+        old_init(self, driver)
+
+        # Patch the instance, only if the driver needs it.
+        if getattr(driver, CHROMEDRIVER_ELEMENT_CENTER_PATCH_FLAG, None):
+            self.move_to_element = types.MethodType(move_to_element, self)
+
+    ActionChains.__init__ = init
+
+    # Mark ActionChains as patched!
+    setattr(ActionChains, patch_name, True)
