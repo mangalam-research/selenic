@@ -2,12 +2,6 @@ import re
 import os
 import subprocess
 import types
-import httplib
-import base64
-try:
-    import json
-except ImportError:
-    import simplejson as json
 from distutils.version import StrictVersion
 
 import selenium
@@ -16,6 +10,8 @@ from selenium.webdriver.firefox.webdriver import FirefoxProfile, FirefoxBinary
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
+
+from . import remote, outil
 
 CHROMEDRIVER_ELEMENT_CENTER_PATCH_FLAG = \
     "_selenic_chromedriver_element_center_patch"
@@ -59,6 +55,12 @@ class Builder(object):
             raise Exception("bad value for COLON_HANDLING: " + colon_handling)
 
         self.remote = self.config.remote
+        self.remote_service = None
+
+        if self.remote:
+            remote_service = self.local_conf["REMOTE_SERVICE"]
+            self.remote_service = \
+                remote.get_service_cls(remote_service)(self.local_conf)
 
     def __getattr__(self, name):
         if name in self.local_conf:
@@ -91,12 +93,10 @@ class Builder(object):
 
         chromedriver_version = None
         if self.remote:
-            driver = webdriver.Remote(
-                desired_capabilities=desired_capabilities,
-                command_executor="http://" +
-                self.local_conf["SAUCELABS_CREDENTIALS"] +
-                "@ondemand.saucelabs.com:80/wd/hub")
-            if browser_string == "CHROME":
+            driver = self.remote_service.build_driver(desired_capabilities)
+            # There is no equivalent for BrowserStack.
+            if browser_string == "CHROME" and \
+               self.remote_service.name == "saucelabs":
                 chromedriver_version = \
                     desired_capabilities.get("chromedriver-version", None)
                 if chromedriver_version is None:
@@ -150,8 +150,14 @@ class Builder(object):
                 raise ValueError("the version installed is not the one "
                                  "you wanted")
 
-        if chromedriver_version is not None and \
-           chromedriver_version > StrictVersion("2.13"):
+        # On BrowserStack we cannot set the version of chromedriver or
+        # query it. So we make the reasonable assuption that the
+        # version of chromedriver is greater than 2.13. (There have
+        # been at least 7 releases after 2.13 at the time of writing.)
+        if (self.remote_service and
+            self.remote_service.name == "browserstack") or \
+           (chromedriver_version is not None and
+            chromedriver_version > StrictVersion("2.13")):
             # We patch ActionChains.
             chromedriver_element_center_patch()
             # We need to mark the driver as needing the patch.
@@ -189,32 +195,33 @@ class Builder(object):
         # pylint: disable=protected-access
         binary._firefox_env[variable] = os.environ[variable]
 
-    def set_test_status(self, jobid, passed=True):
-        """
-        Sets the final status for test runs that are executed at
-        SauceLabs. Can be called whether or not the tests are run at
-        SauceLabs. It is a noop if the tests are *not* run on
-        SauceLabs.
-
-        :param jobid: The job id for which to set the status.
-        :type jobid: :class:`basestring`
-        :param passed: Whether or not the test run passed.
-        :type passed: :class:`bool`
-        :raises Exception: When it can't set the status.
-        """
-        if not self.remote:
+    def set_test_status(self, passed=True):
+        if not self.remote_service:
             return
 
-        (username, key) = self.local_conf["SAUCELABS_CREDENTIALS"].split(":")
-        creds = base64.encodestring('%s:%s' % (username, key))[:-1]
+        self.remote_service.set_test_status(passed)
 
-        conn = httplib.HTTPConnection("saucelabs.com")
-        conn.request('PUT', '/rest/v1/%s/jobs/%s' % (username, jobid),
-                     json.dumps({"passed": passed}),
-                     headers={"Authorization": "Basic " + creds})
-        resp = conn.getresponse()
-        if resp.status != 200:
-            raise Exception("got response: " + resp.status)
+    def get_unused_port(self):
+        return outil.get_unused_port() if not self.remote_service else \
+            self.remote_service.get_unused_port()
+
+    def start_tunnel(self):
+        if not self.remote_service:
+            return None
+
+        return self.remote_service.start_tunnel()
+
+    def set_tunnel_id(self, tunnel_id):
+        if not self.remote_service:
+            return None
+
+        self.remote_service.set_tunnel_id(tunnel_id)
+
+    def stop_tunnel(self):
+        if not self.remote_service:
+            return None
+
+        return self.remote_service.stop_tunnel()
 
     def patch(self, driver):
         if self.colon_handling:
