@@ -215,6 +215,32 @@ class Util(object):
         pos["left"] += int(size["width"] / 2)
         return pos
 
+    def element_screen_coordinates(self, element):
+        return self.driver.execute_script("""
+        var rect = arguments[0].getBoundingClientRect();
+        return {
+        top: rect.top,
+        left: rect.left,
+        bottom: rect.bottom,
+        right: rect.right,
+        width: rect.width,
+        height: rect.height,
+        };
+        """, element)
+
+    def element_page_coordinates(self, element):
+        return self.driver.execute_script("""
+        var rect = arguments[0].getBoundingClientRect();
+        return {
+          top: rect.top + document.body.scrollTop,
+          left: rect.left + document.body.scrollLeft,
+          bottom: rect.bottom + document.body.scrollTop,
+          right: rect.right + document.body.srollLeft,
+          width: rect.width,
+          height: rect.height,
+        };
+        """, element)
+
     def visible_to_user(self, element, *ignorable):
         """
         Determines whether an element is visible to the user. A list of
