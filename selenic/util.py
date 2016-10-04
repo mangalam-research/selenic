@@ -324,13 +324,17 @@ class Util(object):
         """
         Gets the text of the current selection.
 
-        .. note:: This function requires that ``rangy`` be installed.
-
         :returns: The text.
         :rtype: class:`basestring`
         """
         return self.driver.execute_script("""
-        return rangy.getSelection(window).toString()
+        var texts = [];
+        var sel = window.getSelection();
+        var limit = sel.rangeCount;
+        for (var i = 0; i < limit; ++i) {
+           texts.push(sel.getRangeAt(i).toString());
+        }
+        return texts.join("");
         """)
 
     def is_something_selected(self):
