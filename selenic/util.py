@@ -14,14 +14,15 @@ class Util(object):
         self.timeouts = [default_timeout]
         self.driver.set_script_timeout(default_timeout)
 
-        self.osx = driver.desired_capabilities[
-            "platform"].startswith("Mac OS X")
+        platform = driver.desired_capabilities["platform"]
+        # "Mac OS X" on Sauce Labs, "MAC" on Browser Stack
+        self.osx = platform.startswith("Mac OS X") or platform == "MAC"
+
         # Saucelabs sets this inconsistently. When requiring FF on
         # Windows 8.1, we get "XP". When requiring IE on Windows 8.1,
         # we get "WINDOWS". Yuck!
-        self.windows = driver.desired_capabilities["platform"] in \
-            ("XP", "WINDOWS")
-        self.linux = driver.desired_capabilities["platform"] == "Linux"
+        self.windows = platform in ("XP", "WINDOWS")
+        self.linux = platform == "Linux"
 
         self.firefox = driver.name == "firefox"
         self.ie = driver.name == "internet explorer"
