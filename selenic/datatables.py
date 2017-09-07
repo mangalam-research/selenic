@@ -40,7 +40,7 @@ function test() {
         cb();
         return;
     }
-    setTimeout(test, 1000);
+    setTimeout(test, 100);
 }
 test();
 """
