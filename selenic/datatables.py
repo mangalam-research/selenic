@@ -1,6 +1,7 @@
 import re
 
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.wait import TimeoutException
 
 from .util import Condition, Result
 
@@ -50,11 +51,30 @@ class Datatable(Table):
     def __init__(self, *args, **kwargs):
         super(Datatable, self).__init__(*args, **kwargs)
         self.field_selectors.append("#" + self.cssid + "_filter")
-        # Waiting for the existence of a .dataTable element is not
-        # reliable. We wait for the existence of the "next" button
-        # instead.
-        self.initialized_locator = (
-            By.CSS_SELECTOR, "#" + self.cssid + "_next")
+
+    def wait_for_initialized(self):
+        try:
+            self.util.driver.execute_async_script("""
+            var cssid = arguments[0];
+            var done = arguments[1];
+            var $table = jQuery(document.getElementById(cssid));
+            var settings = jQuery.fn.dataTable.isDataTable($table) &&
+              $table.DataTable().settings()[0];
+            if (settings && settings._bInitComplete) {
+              // Already initialized.
+              done();
+              return;
+            }
+            // Not initialized: wait for the init event.
+            $table.one("init.dt", function () {
+              done();
+            });
+            """, self.cssid)
+            # If we did not timeout, then the table is initialized
+            return True
+        except TimeoutException:
+            # If we did timeout, initialization did not happen.
+            return False
 
     def setup_redraw_check(self):
         self.util.driver.execute_async_script(_REDRAW_SETUP_SNIPPET,
