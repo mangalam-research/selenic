@@ -58,17 +58,30 @@ class Datatable(Table):
             var cssid = arguments[0];
             var done = arguments[1];
             var $table = jQuery(document.getElementById(cssid));
-            var settings = jQuery.fn.dataTable.isDataTable($table) &&
-              $table.DataTable().settings()[0];
-            if (settings && settings._bInitComplete) {
-              // Already initialized.
-              done();
-              return;
+
+            function check() {
+              // When Datatables may be loaded by a module loader,
+              // it is possible that Datatables has not been loaded
+              // yet. Poll.
+              if (!jQuery.fn.dataTable) {
+                setTimeout(check, 100);
+                return;
+              }
+
+              var settings = jQuery.fn.dataTable.isDataTable($table) &&
+                $table.DataTable().settings()[0];
+              if (settings && settings._bInitComplete) {
+                // Already initialized.
+                done();
+                return;
+              }
+              // Not initialized: wait for the init event.
+              $table.one("init.dt", function () {
+                done();
+              });
             }
-            // Not initialized: wait for the init event.
-            $table.one("init.dt", function () {
-              done();
-            });
+
+            check();
             """, self.cssid)
             # If we did not timeout, then the table is initialized
             return True
