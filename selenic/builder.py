@@ -12,6 +12,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
 from . import remote, outil
+from .capabilities import NormalizedCapabilities
 
 CHROMEDRIVER_ELEMENT_CENTER_PATCH_FLAG = \
     "_selenic_chromedriver_element_center_patch"
@@ -141,12 +142,15 @@ class Builder(object):
                 raise ValueError("can't start a local " + browser_string)
 
             # Check that what we get is what the config wanted...
-            if driver.desired_capabilities["platform"].upper() \
-               != self.config.platform:
+            driver_caps = NormalizedCapabilities(driver.desired_capabilities)
+            browser_version = \
+                re.sub(r"\..*$", "", driver_caps["browserVersion"])
+
+            if driver_caps["platformName"].upper() != self.config.platform:
                 raise ValueError("the platform you want is not the one "
                                  "you are running selenic on")
-            if re.sub(r"\..*$", "", driver.desired_capabilities["version"]) != \
-               self.config.version:
+
+            if browser_version != self.config.version:
                 raise ValueError("the version installed is not the one "
                                  "you wanted")
 
@@ -157,7 +161,7 @@ class Builder(object):
         if (self.remote_service and
             self.remote_service.name == "browserstack") or \
            (chromedriver_version is not None and
-            chromedriver_version > StrictVersion("2.13")):
+                chromedriver_version > StrictVersion("2.13")):
             # We patch ActionChains.
             chromedriver_element_center_patch()
             # We need to mark the driver as needing the patch.

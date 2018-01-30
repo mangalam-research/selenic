@@ -6,6 +6,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.wait import TimeoutException
 
+from .capabilities import NormalizedCapabilities
 
 class Util(object):
 
@@ -13,8 +14,9 @@ class Util(object):
         self.driver = driver
         self.timeouts = [default_timeout]
         self.driver.set_script_timeout(default_timeout)
+        self.capabilities = NormalizedCapabilities(driver.desired_capabilities)
 
-        platform = driver.desired_capabilities["platform"]
+        platform = self.capabilities["platformName"]
         # "Mac OS X" on Sauce Labs, "MAC" on Browser Stack
         self.osx = platform.startswith("Mac OS X") or platform == "MAC"
 
@@ -27,10 +29,11 @@ class Util(object):
         self.firefox = driver.name == "firefox"
         self.ie = driver.name == "internet explorer"
         self.chrome = driver.name == "chrome"
+        self.edge = driver.name == "MicrosoftEdge"
 
         # Only IE 9 or earlier has a problem with setting cookies...
         self._can_set_cookies = not (
-            self.ie and int(driver.desired_capabilities["version"]) <= 9)
+            self.ie and int(self.capabilities["browserVersion"]) <= 9)
 
         self.ctrl_equivalent_x = self.command_x if self.osx else self.ctrl_x
         """
