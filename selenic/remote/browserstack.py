@@ -46,6 +46,7 @@ def set_test_status(jobid, credentials, passed=True):
         raise Exception("got response: " + resp.status)
 
 class Tunnel(object):
+
     def __init__(self, path, key):
         self.path = path
         self.key = key
@@ -142,13 +143,35 @@ class BrowserStack(Remote):
 
 
 def sanitize_capabilities(caps):
+    """
+    Sanitize the capabilities we pass to Selenic so that they can
+    be consumed by Browserstack.
+
+    :param caps: The capabilities passed to Selenic. This dictionary
+    is modified.
+
+    :returns: The sanitized capabilities.
+    """
     platform = caps["platform"]
 
-    if platform.upper().startswith("WINDOWS 8"):
-        platform = "WIN8"
-    elif platform.upper().startswith("OS X "):
-        platform = "MAC"
+    upper_platform = platform.upper()
 
-    caps["platform"] = platform
+    if upper_platform.startswith("WINDOWS 8"):
+        caps["platform"] = "WIN8"
+    elif upper_platform.startswith("OS X "):
+        caps["platform"] = "MAC"
+    elif upper_platform == "WINDOWS 10":
+        del caps["platform"]
+        caps["os"] = "Windows"
+        caps["os_version"] = "10"
+
+    if caps["browserName"].upper() == "MICROSOFTEDGE":
+        # Sauce Labs takes complete version numbers like
+        # 15.1234. However, Browser Stack takes only .0 numbers like
+        # 15.0.
+        caps["version"] = caps["version"].split(".", 1)[0] + ".0"
+
+    caps["browser_version"] = caps["version"]
+    del caps["version"]
 
     return caps
