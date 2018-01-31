@@ -1,4 +1,5 @@
 import contextlib
+import math
 
 from selenium.webdriver.support.ui import WebDriverWait
 import selenium.webdriver.support.expected_conditions as EC
@@ -316,8 +317,12 @@ class Util(object):
     def completely_visible_to_user(self, element):
         if not element.is_displayed():
             return False
-        pos = self.element_screen_position(element)
-        size = element.size
+        # We floor all dimensions to avoid issues caused by
+        # fractions of pixels. (Sigh...)
+        pos = {k: math.floor(v) for (k, v) in
+               self.element_screen_position(element).iteritems()}
+        size = {k: math.floor(v)
+                for (k, v) in element.size.iteritems()}
         window_size = self.driver.get_window_size()
         return (pos["top"] >= 0 and
                 pos["left"] >= 0 and
