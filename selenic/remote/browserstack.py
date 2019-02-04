@@ -70,18 +70,27 @@ class Tunnel(object):
             stdout=open(stdout_path, 'w'),
             preexec_fn=os.setsid)
 
+        #
         # This is awful but less awful that other
-        # alternatives. BrowserStackLocal does not have a well-defined
-        # mechanism to know when it is ready so we have to
-        # periodically check its stdout. We do not use a pipe due to
-        # the well-known issue with reading pipes without allocating a
-        # thread to continually read it and prevent the buffer being
-        # filled.
-        with open(stdout_path, 'r') as stdout:
-            while True:
+        # alternatives. BrowserStackLocal does not have a well-defined mechanism
+        # to know when it is ready so we have to periodically check its
+        # stdout. We do not use a pipe due to the well-known issue with reading
+        # pipes without allocating a thread to continually read it and prevent
+        # the buffer being filled.
+        #
+        # For the longest time, this loop used to open the file once and
+        # continually read from the end. However, a change in libc made it so
+        # that EOF is now a sticky flag and if this code read the file before it
+        # was written to, then it would read at EOF on the first read, and
+        # forever after! (See https://bugs.python.org/issue34371). Opening the
+        # file anew each time fixes the problem. Still ugly, but meh... It is
+        # also backward compatible.
+        #
+        while True:
+            with open(stdout_path, 'r') as stdout:
                 if "Press Ctrl-C to exit" in stdout.read():
                     break
-                time.sleep(0.2)
+            time.sleep(0.2)
 
         return tunnel_id
 
