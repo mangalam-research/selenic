@@ -35,7 +35,8 @@ class Builder(object):
         self.local_conf = {
             'builder_args': options
         }
-        execfile(self.config_path, self.local_conf)
+        exec(compile(open(self.config_path).read(), self.config_path, 'exec'),
+             self.local_conf)
 
         # This effectively lets the user force colon handling on or
         # off if COLON_HANDLING is defined.
@@ -116,8 +117,8 @@ class Builder(object):
                     service_log_path=self.local_conf["SERVICE_LOG_PATH"],
                     service_args=self.local_conf.get("SERVICE_ARGS"))
                 version_line = subprocess.check_output(
-                    [chromedriver_path, "--version"])
-                version_str = re.match(ur"^ChromeDriver (\d+\.\d+)",
+                    [chromedriver_path, "--version"]).decode("utf8")
+                version_str = re.match(r"^ChromeDriver (\d+\.\d+)",
                                        version_line).group(1)
                 chromedriver_version = StrictVersion(version_str)
             elif browser_string == "FIREFOX":
@@ -250,7 +251,7 @@ def make_patched_find_element(original):
             by = By.CSS_SELECTOR
             value = "." + value
 
-        if original.im_self:
+        if original.__self__:
             return original(by, value)
         else:
             return original(self, by, value)

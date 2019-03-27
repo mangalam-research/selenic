@@ -2,7 +2,7 @@ import subprocess
 import os
 import tempfile
 import time
-import httplib
+import http.client
 import base64
 import shutil
 import signal
@@ -29,7 +29,7 @@ def set_test_status(jobid, credentials, passed=True):
     (username, key) = credentials.split(":")
     creds = base64.encodestring('%s:%s' % (username, key))[:-1]
 
-    conn = httplib.HTTPConnection("saucelabs.com")
+    conn = http.client.HTTPConnection("saucelabs.com")
     conn.request('PUT', '/rest/v1/%s/jobs/%s' % (username, jobid),
                  json.dumps({"passed": passed}),
                  headers={"Authorization": "Basic " + creds})

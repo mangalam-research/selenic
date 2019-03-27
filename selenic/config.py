@@ -115,10 +115,7 @@ class Config(object):
         ret["version"] = self.version
         return ret
 
-    def __unicode__(self):
+    def __str__(self):
         return "Selenic configured for " + \
             ", ".join((self.platform, self.browser, self.version,
                        "Remote" if self.remote else "Local"))
-
-    def __str__(self):
-        return unicode(self)

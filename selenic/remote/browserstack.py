@@ -3,7 +3,7 @@ import tempfile
 import subprocess
 import signal
 import base64
-import httplib
+import http.client
 import time
 try:
     import json
@@ -36,7 +36,7 @@ def set_test_status(jobid, credentials, passed=True):
     (username, key) = credentials.split(":")
     creds = base64.encodestring('%s:%s' % (username, key))[:-1]
 
-    conn = httplib.HTTPSConnection("www.browserstack.com")
+    conn = http.client.HTTPSConnection("www.browserstack.com")
     conn.request('PUT', '/automate/sessions/%s.json' % jobid,
                  json.dumps({"status": "completed" if passed else "error"}),
                  headers={"Content-Type": "application/json",

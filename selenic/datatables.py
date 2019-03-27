@@ -7,7 +7,7 @@ from .util import Condition, Result
 
 from .tables import Table
 
-info_re = re.compile(ur"^Showing (\d+) to (\d+) of (\d+) entries")
+info_re = re.compile(r"^Showing (\d+) to (\d+) of (\d+) entries")
 
 _REDRAW_SETUP_FUNCTION = """
 function redrawSetup(cssid, done) {

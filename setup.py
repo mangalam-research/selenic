@@ -12,10 +12,8 @@ setup(
     license="MPL 2.0",
     keywords=["selenium", "testing"],
     url="https://github.com/mangalam-research/selenic",
-    # use_2to3=True,
     classifiers=[
-        "Programming Language :: Python",
-        #"Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)",

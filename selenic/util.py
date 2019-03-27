@@ -320,9 +320,9 @@ class Util(object):
         # We floor all dimensions to avoid issues caused by
         # fractions of pixels. (Sigh...)
         pos = {k: math.floor(v) for (k, v) in
-               self.element_screen_position(element).iteritems()}
+               self.element_screen_position(element).items()}
         size = {k: math.floor(v)
-                for (k, v) in element.size.iteritems()}
+                for (k, v) in element.size.items()}
         window_size = self.driver.get_window_size()
         return (pos["top"] >= 0 and
                 pos["left"] >= 0 and
@@ -583,5 +583,5 @@ class Result(object):
         self.result = result
         self.payload = payload
 
-    def __nonzero__(self, *args, **kwargs):
-        return self.result
+    def __bool__(self, *args, **kwargs):
+        return bool(self.result)
