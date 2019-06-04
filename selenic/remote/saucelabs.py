@@ -27,12 +27,13 @@ def set_test_status(jobid, credentials, passed=True):
     :raises Exception: When it can't set the status.
     """
     (username, key) = credentials.split(":")
-    creds = base64.encodestring('%s:%s' % (username, key))[:-1]
+    creds = base64.encodestring(
+        ('%s:%s' % (username, key)).encode("utf-8"))[:-1]
 
     conn = http.client.HTTPConnection("saucelabs.com")
     conn.request('PUT', '/rest/v1/%s/jobs/%s' % (username, jobid),
                  json.dumps({"passed": passed}),
-                 headers={"Authorization": "Basic " + creds})
+                 headers={"Authorization": b"Basic " + creds})
     resp = conn.getresponse()
     if resp.status != 200:
         raise Exception("got response: " + resp.status)
@@ -98,6 +99,7 @@ def get_unused_sauce_port():
     return port
 
 class Tunnel(object):
+
     def __init__(self, path, user, key):
         self.path = path
         self.user = user
@@ -151,7 +153,7 @@ class SauceLabs(Remote):
 
         if self.tunnel_id or self.tunnel:
             caps['tunnel-identifier'] = self.tunnel_id or \
-                                        self.tunnel.tunnel_id
+                self.tunnel.tunnel_id
 
         return super(SauceLabs, self).build_driver(capabilities)
 

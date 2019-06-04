@@ -34,13 +34,14 @@ def set_test_status(jobid, credentials, passed=True):
     #      https://www.browserstack.com/automate/sessions/<session-id>.json
 
     (username, key) = credentials.split(":")
-    creds = base64.encodestring('%s:%s' % (username, key))[:-1]
+    creds = base64.encodestring(
+        ('%s:%s' % (username, key)).encode("utf-8"))[:-1]
 
     conn = http.client.HTTPSConnection("www.browserstack.com")
     conn.request('PUT', '/automate/sessions/%s.json' % jobid,
                  json.dumps({"status": "completed" if passed else "error"}),
                  headers={"Content-Type": "application/json",
-                          "Authorization": "Basic " + creds})
+                          "Authorization": b"Basic " + creds})
     resp = conn.getresponse()
     if resp.status != 200:
         raise Exception("got response: " + resp.status)
@@ -123,8 +124,7 @@ class BrowserStack(Remote):
 
         if self.tunnel_id or self.tunnel:
             caps['browserstack.local'] = True
-            caps['browserstack.localIdentifier'] = \
-                self.tunnel_id or self.tunnel.tunnel_id
+            caps['browserstack.localIdentifier'] = self.tunnel_id or self.tunnel.tunnel_id
 
         return super(BrowserStack, self).build_driver(capabilities)
 
