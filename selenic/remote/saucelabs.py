@@ -67,7 +67,7 @@ def get_unused_sauce_port():
         # locally.
         try:
             out = subprocess.check_output(["lsof", "-n", "-P", "-i",
-                                           ":" + candidate_str])
+                                           ":" + candidate_str]).decode("utf8")
         except subprocess.CalledProcessError as ex:
             # When lsof returns an empty list, the exit code is 1,
             # even if there was no actual error. We handle this
