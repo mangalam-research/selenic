@@ -151,6 +151,20 @@ class BrowserStack(Remote):
         set_test_status(self.driver.session_id, self.credentials, passed)
 
 
+# We provide a version number in our configuration but BrowserStack wants a
+# name.
+OSX_VERSION_TO_NAME = {
+    "10.6": "Snow Leopard",
+    "10.7": "Lion",
+    "10.8": "Mountain Lion",
+    "10.9": "Mavericks",
+    "10.10": "Yosemite",
+    "10.11": "El Capitan",
+    "10.12": "Sierra",
+    "10.13": "High Sierra",
+    "10.14": "Mojave",
+}
+
 def sanitize_capabilities(caps):
     """
     Sanitize the capabilities we pass to Selenic so that they can
@@ -165,14 +179,14 @@ def sanitize_capabilities(caps):
 
     upper_platform = platform.upper()
 
-    if upper_platform.startswith("WINDOWS 8"):
-        caps["platform"] = "WIN8"
-    elif upper_platform.startswith("OS X "):
-        caps["platform"] = "MAC"
-    elif upper_platform == "WINDOWS 10":
+    if upper_platform.startswith("WINDOWS "):
         del caps["platform"]
         caps["os"] = "Windows"
-        caps["os_version"] = "10"
+        caps["os_version"] = upper_platform[8:]
+    elif upper_platform.startswith("OS X "):
+        del caps["platform"]
+        caps["os"] = "OS X"
+        caps["os_version"] = OSX_VERSION_TO_NAME[upper_platform[5:]]
 
     if caps["browserName"].upper() == "MICROSOFTEDGE":
         # Sauce Labs takes complete version numbers like
