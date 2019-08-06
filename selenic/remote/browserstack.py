@@ -65,8 +65,8 @@ class Tunnel(object):
         # we just kill the parent.
         #
         self.process = subprocess.Popen(
-            [self.path, self.key, "-onlyAutomate",
-             "-localIdentifier", tunnel_id],
+            [self.path, "--key", self.key, "--only-automate",
+             "--local-identifier", tunnel_id],
             stdin=open("/dev/null", 'r'),
             stdout=open(stdout_path, 'w'),
             preexec_fn=os.setsid)
