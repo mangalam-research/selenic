@@ -96,17 +96,6 @@ class Builder(object):
         chromedriver_version = None
         if self.remote:
             driver = self.remote_service.build_driver(desired_capabilities)
-            # There is no equivalent for BrowserStack.
-            if browser_string == "CHROME" and \
-               self.remote_service.name == "saucelabs":
-                chromedriver_version = \
-                    desired_capabilities.get("chromedriver-version", None)
-                if chromedriver_version is None:
-                    raise ValueError(
-                        "when using Chrome, you must set a "
-                        "``chromedriver-version`` capability so that Selenic "
-                        "can detect which version of Chromedriver will "
-                        "be used.")
         else:
             if browser_string == "CHROME":
                 chromedriver_path = self.local_conf["CHROMEDRIVER_PATH"]
